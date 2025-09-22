@@ -3,12 +3,13 @@ package maddog
 import (
 	"fmt"
 	"net/http"
-
 	"github.com/edwardma33/maddog-server-go/jwt"
+	"github.com/gorilla/sessions"
 )
 
 type App struct {
   Server http.Server
+  Store *sessions.CookieStore
   Cfg AppConfig
 }
 
@@ -18,6 +19,7 @@ func NewApp(addr string, cfg AppConfig) *App {
       Handler: cfg.Mux,
       Addr: addr,
     },
+    Store: sessions.NewCookieStore(cfg.SessionKey),
     Cfg: cfg,
   }
 }
@@ -40,16 +42,27 @@ func (a *App) HandleProtected(pattern string, handler http.Handler) {
   a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), filterChain(handler))
 }
 
+func (a *App) RegisterControllers(controllers []Controller) {
+  for _, c := range controllers {
+    for _, r := range c.Routes {
+      a.Handle(fmt.Sprintf("%s%s", c.UrlPrefix, r.Path), r.Handler)
+    }
+  }
+}
+
 type AppConfig struct {
   Mux *http.ServeMux
   UrlPrefix string
   GlobalFilterChain Filter
+  SessionKey []byte
 }
 
-func NewAppConfig(urlPrefix string, globalFilters []Filter) AppConfig {
+func NewAppConfig(urlPrefix, sessionKey string, globalFilters []Filter) AppConfig {
+  sessionKeyBytes := []byte(sessionKey)
   return AppConfig{
     Mux: http.NewServeMux(),
     UrlPrefix: urlPrefix,
+    SessionKey: sessionKeyBytes,
     GlobalFilterChain: FilterChain(globalFilters...),
   }
 }
