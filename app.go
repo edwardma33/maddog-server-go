@@ -29,17 +29,17 @@ func (a *App) Run() error {
   return a.Server.ListenAndServe()
 }
 
-func (a *App) HandleCustom(pattern string, handler http.Handler) {
-  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), handler)
+func (a *App) HandleCustom(pattern string, handler HandlerFunc) {
+  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), Adapt(handler))
 }
 
-func (a *App) Handle(pattern string, handler http.Handler) {
-  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), a.Cfg.GlobalFilterChain(handler))
+func (a *App) Handle(pattern string, handler HandlerFunc) {
+  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), a.Cfg.GlobalFilterChain(Adapt(handler)))
 }
 
-func (a *App) HandleProtected(pattern string, handler http.Handler) {
+func (a *App) HandleProtected(pattern string, handler HandlerFunc) {
   filterChain := FilterChain(jwt.DefaultJwtFilter, a.Cfg.GlobalFilterChain)
-  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), filterChain(handler))
+  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), filterChain(Adapt(handler)))
 }
 
 func (a *App) RegisterControllers(controllers []Controller) {

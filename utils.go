@@ -38,3 +38,5 @@ func ParseDynamicPathVariables(r *http.Request, prefix string, name string) (str
 
   return s, nil
 }
+
+type ResMap map[string]any

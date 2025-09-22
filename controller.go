@@ -1,9 +1,5 @@
 package maddog
 
-import (
-	"net/http"
-)
-
 type Controller struct {
   UrlPrefix string
   Routes []Route
@@ -11,10 +7,10 @@ type Controller struct {
 
 type Route struct {
   Path string
-  Handler http.Handler
+  Handler HandlerFunc
 }
 
-func NewRoute(path string, handler http.Handler) Route {
+func NewRoute(path string, handler HandlerFunc) Route {
   return Route{
     Path: path,
     Handler: handler,
