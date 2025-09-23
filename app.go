@@ -3,6 +3,8 @@ package maddog
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/a-h/templ"
 	"github.com/edwardma33/maddog-server-go/jwt"
 	"github.com/gorilla/sessions"
 )
@@ -42,6 +44,14 @@ func (a *App) HandleProtected(pattern string, handler HandlerFunc) {
   a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), filterChain(Adapt(handler)))
 }
 
+func (a *App) HandleFs(pattern string, dir http.Dir) {
+  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), http.StripPrefix(pattern, http.FileServer(dir)))
+}
+
+func (a *App) HandleTempl(pattern string, t *templ.ComponentHandler) {
+  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), t)
+}
+
 func (a *App) RegisterControllers(controllers []Controller) {
   for _, c := range controllers {
     for _, r := range c.Routes {
@@ -49,6 +59,8 @@ func (a *App) RegisterControllers(controllers []Controller) {
     }
   }
 }
+
+
 
 type AppConfig struct {
   Mux *http.ServeMux

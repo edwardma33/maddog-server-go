@@ -16,3 +16,4 @@ func NewRoute(path string, handler HandlerFunc) Route {
     Handler: handler,
   }
 }
+
