@@ -51,7 +51,7 @@ func (a *App) HandleTempl(pattern string, t *templ.ComponentHandler) {
 func (a *App) RegisterControllers(controllers []Controller) {
   for _, c := range controllers {
     for _, r := range c.Routes {
-      a.Handle(fmt.Sprintf("%s%s", c.UrlPrefix, r.Path), r.Handler)
+      a.Handle(fmt.Sprintf("%s%s", c.UrlPrefix, r.Path), rHandler)
     }
   }
 }

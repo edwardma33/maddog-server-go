@@ -17,6 +17,13 @@ func (c *Context) WriteJSON(status int, res ResMap) {
   c.Res.Write(data)
 }
 
+func (c *Context) Error(status int, err error) {
+  res := ResMap{"error": err.Error()}
+  data, _ := json.Marshal(res)
+  c.Res.WriteHeader(status)
+  c.Res.Write(data)
+}
+
 func (c *Context) MapReqJSON(v any) (any, error) {
   data, err := io.ReadAll(c.Req.Body)
   if err != nil {
