@@ -3,15 +3,12 @@ package maddog
 import (
 	"fmt"
 	"net/http"
-
 	"github.com/a-h/templ"
 	"github.com/edwardma33/maddog-server-go/jwt"
-	"github.com/gorilla/sessions"
 )
 
 type App struct {
   Server http.Server
-  Store *sessions.CookieStore
   Cfg AppConfig
 }
 
@@ -21,7 +18,6 @@ func NewApp(addr string, cfg AppConfig) *App {
       Handler: cfg.Mux,
       Addr: addr,
     },
-    Store: sessions.NewCookieStore(cfg.SessionKey),
     Cfg: cfg,
   }
 }
@@ -59,8 +55,6 @@ func (a *App) RegisterControllers(controllers []Controller) {
     }
   }
 }
-
-
 
 type AppConfig struct {
   Mux *http.ServeMux
