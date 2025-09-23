@@ -27,6 +27,24 @@ func (c *Context) MapReqJSON(v any) (any, error) {
   return v, err
 }
 
+func (c *Context) Cookie(name string) (*http.Cookie, error) {
+  return c.Req.Cookie(name)
+}
+
+func (c *Context) SetCookie(cookie *http.Cookie) {
+  http.SetCookie(c.Res, cookie)
+}
+
+func (c *Context) DeleteCookie(name string) {
+  http.SetCookie(c.Res, &http.Cookie{
+    Name:     name,
+    Value:    "",
+    Path:     "/",
+    MaxAge:   -1,
+    HttpOnly: true,
+  })
+}
+
 type Handler interface {
   ServeHTTP(*Context)
 }
