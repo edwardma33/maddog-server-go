@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"github.com/a-h/templ"
-	"github.com/edwardma33/maddog-server-go/jwt"
 )
 
 type App struct {
@@ -28,16 +27,11 @@ func (a *App) Run() error {
 }
 
 func (a *App) HandleCustom(pattern string, handler HandlerFunc) {
-  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), Adapt(handler))
+  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), AdaptF(handler))
 }
 
 func (a *App) Handle(pattern string, handler HandlerFunc) {
-  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), a.Cfg.GlobalFilterChain(Adapt(handler)))
-}
-
-func (a *App) HandleProtected(pattern string, handler HandlerFunc) {
-  filterChain := FilterChain(jwt.DefaultJwtFilter, a.Cfg.GlobalFilterChain)
-  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), filterChain(Adapt(handler)))
+  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), AdaptH(a.Cfg.GlobalFilterChain(HandlerFunc(handler))))
 }
 
 func (a *App) HandleFs(pattern string, dir http.Dir) {

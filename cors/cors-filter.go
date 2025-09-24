@@ -3,22 +3,29 @@ package cors
 import (
 	"log"
 	"net/http"
+	"strconv"
+	"github.com/edwardma33/maddog-server-go"
 )
 
-func DefaultCorsFilter(next http.Handler) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+const (
+  AllMethods = "GET, POST, PUT, DELETE, OPTIONS"
+)
+
+func DefaultCorsFilter(next maddog.Handler) maddog.Handler {
+  return maddog.HandlerFunc(func(ctx *maddog.Context) {
     log.Println("Cors Filter Hit")
-    w.Header().Set("Access-Control-Allow-Origin", "*")
-    w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-    w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-    w.Header().Set("Access-Control-Expose-Headers", "Authorization")
+    ctx.Res.Header().Set("Access-Control-Allow-Origin", "*")
+    ctx.Res.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+    ctx.Res.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+    ctx.Res.Header().Set("Access-Control-Expose-Headers", "Authorization")
+    ctx.Res.Header().Set("Access-Control-Allow-Credentials", "true")
     
-    if r.Method == http.MethodOptions {
-      w.WriteHeader(http.StatusNoContent)
+    if ctx.Req.Method == http.MethodOptions {
+      ctx.Res.WriteHeader(http.StatusNoContent)
       return
     }
     
-    next.ServeHTTP(w, r)
+    next.ServeHTTP(ctx)
   })
 }
 
@@ -26,21 +33,26 @@ type CorsConfig struct {
   Origins string
   Methods string
   Headers string
+  AllowCredentials bool
 }
 
-func CustomCorsFilter(next http.Handler, corsCfg CorsConfig) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func CustomCorsFilter(cfg CorsConfig) maddog.Filter {
+  return func(next maddog.Handler) maddog.Handler {
+    return maddog.HandlerFunc(func(ctx *maddog.Context) {
     log.Println("Cors Filter Hit")
-    w.Header().Set("Access-Control-Allow-Origin", corsCfg.Origins)
-    w.Header().Set("Access-Control-Allow-Methods", corsCfg.Methods)
-    w.Header().Set("Access-Control-Allow-Headers", corsCfg.Headers)
-    w.Header().Set("Access-Control-Expose-Headers", "Authorization")
+
+    ctx.Res.Header().Set("Access-Control-Allow-Origin", cfg.Origins)
+    ctx.Res.Header().Set("Access-Control-Allow-Methods", cfg.Methods)
+    ctx.Res.Header().Set("Access-Control-Allow-Headers", cfg.Headers)
+    ctx.Res.Header().Set("Access-Control-Expose-Headers", "Authorization")
+    ctx.Res.Header().Set("Access-Control-Allow-Credentials", strconv.FormatBool(cfg.AllowCredentials))
     
-    if r.Method == http.MethodOptions {
-      w.WriteHeader(http.StatusNoContent)
+    if ctx.Req.Method == http.MethodOptions {
+      ctx.Res.WriteHeader(http.StatusNoContent)
       return
     }
     
-    next.ServeHTTP(w, r)
-  })
+    next.ServeHTTP(ctx)
+    })
+  }
 }

@@ -1,11 +1,10 @@
 package maddog
 
-import "net/http"
 
-type Filter func(http.Handler) http.Handler
+type Filter func(Handler) Handler
 
 func FilterChain(filters ...Filter) Filter {
-  return func(finalHandler http.Handler) http.Handler {
+  return func(finalHandler Handler) Handler {
     h := finalHandler
 
     for i := len(filters) - 1; i>=0; i-- {

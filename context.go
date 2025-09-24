@@ -63,7 +63,14 @@ func (f HandlerFunc) ServeHTTP(c *Context) {
   f(c)
 }
 
-func Adapt(h HandlerFunc) http.Handler {
+func AdaptF(h HandlerFunc) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    ctx := &Context{Res: w, Req: r}
+    h.ServeHTTP(ctx)
+  })
+}
+
+func AdaptH(h Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     ctx := &Context{Res: w, Req: r}
     h.ServeHTTP(ctx)

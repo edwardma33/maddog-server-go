@@ -2,12 +2,12 @@ package logger
 
 import (
 	"log"
-	"net/http"
+	"github.com/edwardma33/maddog-server-go"
 )
 
-func LoggerFilter(next http.Handler) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    next.ServeHTTP(w, r)
-    log.Printf("%s %s\n", r.Method, r.URL.Path)
+func LoggerFilter(next maddog.Handler) maddog.Handler {
+  return maddog.HandlerFunc(func(ctx *maddog.Context) {
+    next.ServeHTTP(ctx)
+    log.Printf("%s %s\n", ctx.Req.Method, ctx.Req.URL.Path)
   })
 }
