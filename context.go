@@ -17,6 +17,10 @@ func (c *Context) WriteJSON(status int, res ResMap) {
   c.Res.Write(data)
 }
 
+func (c *Context) Redirect(url string, status int) {
+  http.Redirect(c.Res, c.Req, url, status)
+}
+
 func (c *Context) Error(status int, err error) {
   res := ResMap{"error": err.Error()}
   data, _ := json.Marshal(res)
