@@ -3,6 +3,8 @@ package maddog
 import (
 	"fmt"
 	"net/http"
+	"slices"
+
 	"github.com/a-h/templ"
 )
 
@@ -30,8 +32,9 @@ func (a *App) HandleCustom(pattern string, handler HandlerFunc) {
   a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), AdaptF(handler))
 }
 
-func (a *App) Handle(pattern string, handler HandlerFunc) {
-  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), AdaptH(a.Cfg.GlobalFilterChain(HandlerFunc(handler))))
+func (a *App) Handle(pattern string, handler HandlerFunc, filters ...Filter) {
+  filterChain := FilterChain(append(a.Cfg.GlobalFilters, filters...)...)
+  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), AdaptH(filterChain(HandlerFunc(handler))))
 }
 
 func (a *App) HandleFs(pattern string, dir http.Dir) {
@@ -45,7 +48,7 @@ func (a *App) HandleTempl(pattern string, t *templ.ComponentHandler) {
 func (a *App) RegisterControllers(controllers []Controller) {
   for _, c := range controllers {
     for _, r := range c.Routes {
-      a.Handle(fmt.Sprintf("%s%s", c.UrlPrefix, r.Path), r.Handler)
+      a.Handle(fmt.Sprintf("%s%s", c.UrlPrefix, r.Path), r.Handler, r.Filters...)
     }
   }
 }
@@ -53,7 +56,7 @@ func (a *App) RegisterControllers(controllers []Controller) {
 type AppConfig struct {
   Mux *http.ServeMux
   UrlPrefix string
-  GlobalFilterChain Filter
+  GlobalFilters []Filter
   SessionKey []byte
 }
 
@@ -63,6 +66,6 @@ func NewAppConfig(urlPrefix, sessionKey string, globalFilters []Filter) AppConfi
     Mux: http.NewServeMux(),
     UrlPrefix: urlPrefix,
     SessionKey: sessionKeyBytes,
-    GlobalFilterChain: FilterChain(globalFilters...),
+    GlobalFilters: globalFilters,
   }
 }
