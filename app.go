@@ -3,7 +3,6 @@ package maddog
 import (
 	"fmt"
 	"net/http"
-	"slices"
 
 	"github.com/a-h/templ"
 )

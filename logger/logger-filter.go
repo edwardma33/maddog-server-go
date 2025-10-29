@@ -7,7 +7,7 @@ import (
 
 func LoggerFilter(next maddog.Handler) maddog.Handler {
   return maddog.HandlerFunc(func(ctx *maddog.Context) {
-    next.ServeHTTP(ctx)
     log.Printf("%s %s\n", ctx.Req.Method, ctx.Req.URL.Path)
+    next.ServeHTTP(ctx)
   })
 }
