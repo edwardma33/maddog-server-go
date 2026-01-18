@@ -1,6 +1,7 @@
 package maddog_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,18 +10,44 @@ import (
 )
 
 func TestPing(t *testing.T) {
-  srv := maddog.NewServer(":8080", "")
+	srv := maddog.NewServer(":8080", "")
 
-  srv.Get("/ping", func(ctx *maddog.Context) {
-    ctx.Res.Write([]byte("pong"))
-  })
+	srv.Get("/ping", func(ctx *maddog.Context) {
+		ctx.Res.Write([]byte("pong"))
+	})
 
-  req := httptest.NewRequest(http.MethodGet, "/ping", nil)
-  w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/ping", nil)
+	w := httptest.NewRecorder()
 
-  srv.Router.ServeHTTP(w, req)
+	srv.Router.ServeHTTP(w, req)
 
-  if w.Code != http.StatusOK {
-    t.Fatalf("expected 200, go %d", w.Code)
-  }
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, go %d", w.Code)
+	}
+}
+
+func TestUse(t *testing.T) {
+	srv := maddog.NewServer(":8080", "")
+
+	srv.Use(maddog.AdaptMiddleware(func(next maddog.Handler) maddog.Handler {
+		return maddog.HandlerFunc(func(ctx *maddog.Context) {
+			c := context.WithValue(ctx.Req.Context(), "user", "maddox")
+			ctx.Req = ctx.Req.WithContext(c)
+			next.ServeHTTP(ctx)
+		})
+	}))
+
+	srv.Get("/ping", func(ctx *maddog.Context) {
+		t.Logf("User: %s", ctx.Req.Context().Value("user"))
+		ctx.Res.Write([]byte("pong"))
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/ping", nil)
+	w := httptest.NewRecorder()
+
+	srv.Router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, go %d", w.Code)
+	}
 }

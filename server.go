@@ -32,34 +32,34 @@ func (a *App) Run() error {
   return a.Server.ListenAndServe()
 }
 
+func (a *App) Use(middlewares ...func(http.Handler) http.Handler) {
+  a.Router.Use(middlewares...)
+}
+
 func (a *App) Get(pattern string, handler HandlerFunc) {
-  a.Router.Get(pattern, Adapt(handler))
+  a.Router.Get(pattern, AdaptF(handler))
 }
 
 func (a *App) Post(pattern string, handler HandlerFunc) {
-  a.Router.Post(pattern, Adapt(handler))
+  a.Router.Post(pattern, AdaptF(handler))
 }
 
 func (a *App) Put(pattern string, handler HandlerFunc) {
-  a.Router.Put(pattern, Adapt(handler))
+  a.Router.Put(pattern, AdaptF(handler))
 }
 
 func (a *App) Delete(pattern string, handler HandlerFunc) {
-  a.Router.Delete(pattern, Adapt(handler))
+  a.Router.Delete(pattern, AdaptF(handler))
 }
 
 func (a *App) Patch(pattern string, handler HandlerFunc) {
-  a.Router.Patch(pattern, Adapt(handler))
-}
-
-func (a *App) Handle(pattern string, handler HandlerFunc) {
-  a.Router.Handle(fmt.Sprintf("%s%s", a.UrlPrefix, pattern), Adapt(handler))
+  a.Router.Patch(pattern, AdaptF(handler))
 }
 
 func (a *App) HandleFs(pattern string, dir http.Dir) {
-  a.Router.Handle(fmt.Sprintf("%s%s", a.UrlPrefix, pattern), http.StripPrefix(pattern, http.FileServer(dir)))
+  a.Router.Handle(pattern, http.StripPrefix(pattern, http.FileServer(dir)))
 }
 
 func (a *App) HandleTempl(pattern string, t *templ.ComponentHandler) {
-  a.Router.Handle(fmt.Sprintf("%s%s", a.UrlPrefix, pattern), t)
+  a.Router.Handle(pattern, t)
 }
