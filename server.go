@@ -10,16 +10,20 @@ import (
 
 type App struct {
   Server http.Server
-  Cfg AppConfig
+  Router *chi.Mux
+  UrlPrefix string
 }
 
-func NewApp(addr string, cfg AppConfig) *App {
+func NewServer(addr string, urlPrefix string) *App {
+  r := chi.NewRouter()
   return &App{
+    
     Server: http.Server{
-      Handler: cfg.Mux,
+      Handler: r,
       Addr: addr,
     },
-    Cfg: cfg,
+    Router: r,
+    UrlPrefix: urlPrefix,
   }
 }
 
@@ -28,40 +32,34 @@ func (a *App) Run() error {
   return a.Server.ListenAndServe()
 }
 
-func (a *App) Handle(pattern string, handler HandlerFunc, filters ...Filter) {
-  filterChain := FilterChain(append(a.Cfg.GlobalFilters, filters...)...)
-  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), AdaptH(filterChain(HandlerFunc(handler))))
+func (a *App) Get(pattern string, handler HandlerFunc) {
+  a.Router.Get(pattern, Adapt(handler))
+}
+
+func (a *App) Post(pattern string, handler HandlerFunc) {
+  a.Router.Post(pattern, Adapt(handler))
+}
+
+func (a *App) Put(pattern string, handler HandlerFunc) {
+  a.Router.Put(pattern, Adapt(handler))
+}
+
+func (a *App) Delete(pattern string, handler HandlerFunc) {
+  a.Router.Delete(pattern, Adapt(handler))
+}
+
+func (a *App) Patch(pattern string, handler HandlerFunc) {
+  a.Router.Patch(pattern, Adapt(handler))
+}
+
+func (a *App) Handle(pattern string, handler HandlerFunc) {
+  a.Router.Handle(fmt.Sprintf("%s%s", a.UrlPrefix, pattern), Adapt(handler))
 }
 
 func (a *App) HandleFs(pattern string, dir http.Dir) {
-  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), http.StripPrefix(pattern, http.FileServer(dir)))
+  a.Router.Handle(fmt.Sprintf("%s%s", a.UrlPrefix, pattern), http.StripPrefix(pattern, http.FileServer(dir)))
 }
 
 func (a *App) HandleTempl(pattern string, t *templ.ComponentHandler) {
-  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), t)
-}
-
-func (a *App) RegisterControllers(controllers []Controller) {
-  for _, c := range controllers {
-    for _, r := range c.Routes {
-      a.Handle(fmt.Sprintf("%s%s", c.UrlPrefix, r.Path), r.Handler, r.Filters...)
-    }
-  }
-}
-
-type AppConfig struct {
-  Mux *chi.Mux
-  UrlPrefix string
-  GlobalFilters []Filter
-  SessionKey []byte
-}
-
-func NewAppConfig(urlPrefix, sessionKey string, globalFilters []Filter) AppConfig {
-  sessionKeyBytes := []byte(sessionKey)
-  return AppConfig{
-    Mux: chi.NewRouter(),
-    UrlPrefix: urlPrefix,
-    SessionKey: sessionKeyBytes,
-    GlobalFilters: globalFilters,
-  }
+  a.Router.Handle(fmt.Sprintf("%s%s", a.UrlPrefix, pattern), t)
 }
