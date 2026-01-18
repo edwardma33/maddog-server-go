@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/a-h/templ"
+	"github.com/go-chi/chi/v5"
 )
 
 type App struct {
@@ -25,10 +26,6 @@ func NewApp(addr string, cfg AppConfig) *App {
 func (a *App) Run() error {
   fmt.Printf("Server running @ http://localhost%s\n", a.Server.Addr)
   return a.Server.ListenAndServe()
-}
-
-func (a *App) HandleCustom(pattern string, handler HandlerFunc) {
-  a.Cfg.Mux.Handle(fmt.Sprintf("%s%s", a.Cfg.UrlPrefix, pattern), AdaptF(handler))
 }
 
 func (a *App) Handle(pattern string, handler HandlerFunc, filters ...Filter) {
@@ -53,7 +50,7 @@ func (a *App) RegisterControllers(controllers []Controller) {
 }
 
 type AppConfig struct {
-  Mux *http.ServeMux
+  Mux *chi.Mux
   UrlPrefix string
   GlobalFilters []Filter
   SessionKey []byte
@@ -62,7 +59,7 @@ type AppConfig struct {
 func NewAppConfig(urlPrefix, sessionKey string, globalFilters []Filter) AppConfig {
   sessionKeyBytes := []byte(sessionKey)
   return AppConfig{
-    Mux: http.NewServeMux(),
+    Mux: chi.NewRouter(),
     UrlPrefix: urlPrefix,
     SessionKey: sessionKeyBytes,
     GlobalFilters: globalFilters,
