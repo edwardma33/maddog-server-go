@@ -29,16 +29,17 @@ func TestPing(t *testing.T) {
 func TestUse(t *testing.T) {
 	srv := maddog.NewServer(":8080", "")
 
-	srv.Use(maddog.AdaptMiddleware(func(next maddog.Handler) maddog.Handler {
-		return maddog.HandlerFunc(func(ctx *maddog.Context) {
-			c := context.WithValue(ctx.Req.Context(), "user", "maddox")
-			ctx.Req = ctx.Req.WithContext(c)
-			next.ServeHTTP(ctx)
-		})
-	}))
+	srv.Use(func(h maddog.Handler) maddog.Handler {
+    return maddog.HandlerFunc(func(ctx *maddog.Context) {
+      c := context.WithValue(ctx.Req.Context(), "msg", "COYG!")
+      ctx.Req = ctx.Req.WithContext(c)
+
+      h.ServeHTTP(ctx)
+    })
+  })
 
 	srv.Get("/ping", func(ctx *maddog.Context) {
-		t.Logf("User: %s", ctx.Req.Context().Value("user"))
+		t.Logf("Middleware msg: %s", ctx.Req.Context().Value("msg"))
 		ctx.Res.Write([]byte("pong"))
 	})
 

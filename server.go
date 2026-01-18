@@ -32,8 +32,13 @@ func (a *App) Run() error {
   return a.Server.ListenAndServe()
 }
 
-func (a *App) Use(middlewares ...func(http.Handler) http.Handler) {
-  a.Router.Use(middlewares...)
+func (a *App) Use(middlewares ...func(Handler) Handler) {
+  adapted := []func(http.Handler) http.Handler{}
+  for _, mw := range middlewares {
+    adapted = append(adapted, AdaptMiddleware(mw))
+  }
+  a.Router.Use(adapted...)
+
 }
 
 func (a *App) Get(pattern string, handler HandlerFunc) {
