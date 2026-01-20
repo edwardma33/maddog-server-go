@@ -8,26 +8,34 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+
+
 type App struct {
   Server http.Server
+  MainRouter *chi.Mux
   Router *chi.Mux
-  UrlPrefix string
+  GlobalPattern string
 }
 
-func NewServer(addr string, urlPrefix string) *App {
+func NewServer(addr string, globalPattern string) *App {
   r := chi.NewRouter()
+  sr := &SubRouter{
+    Pattern: globalPattern,
+    Router: chi.NewRouter(),
+  }
   return &App{
-    
     Server: http.Server{
       Handler: r,
       Addr: addr,
     },
-    Router: r,
-    UrlPrefix: urlPrefix,
+    GlobalPattern: globalPattern,
+    MainRouter: r,
+    Router: sr.Router,
   }
 }
 
 func (a *App) Run() error {
+  a.MainRouter.Mount(a.GlobalPattern, a.Router)
   fmt.Printf("Server running @ http://localhost%s\n", a.Server.Addr)
   return a.Server.ListenAndServe()
 }
@@ -38,7 +46,26 @@ func (a *App) Use(middlewares ...func(Handler) Handler) {
     adapted = append(adapted, AdaptMiddleware(mw))
   }
   a.Router.Use(adapted...)
+}
 
+func (a *App) NewSubRouter(pattern string) *SubRouter {
+  return &SubRouter{
+    Pattern: pattern,
+    Router: chi.NewRouter(),
+  }
+}
+
+func (a *App) NewSubRouterMount(pattern string) *SubRouter {
+  sr := &SubRouter{
+    Pattern: pattern,
+    Router: chi.NewRouter(),
+  }
+  a.Mount(sr)
+  return sr
+}
+
+func (a *App) Mount(sr *SubRouter) {
+  a.Router.Mount(sr.Pattern, sr.Router)
 }
 
 func (a *App) Get(pattern string, handler HandlerFunc) {

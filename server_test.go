@@ -10,7 +10,7 @@ import (
 )
 
 func TestPing(t *testing.T) {
-	srv := maddog.NewServer(":8080", "")
+	srv := maddog.NewServer(":8080", "/")
 
 	srv.Get("/ping", func(ctx *maddog.Context) {
 		ctx.Res.Write([]byte("pong"))
@@ -27,7 +27,7 @@ func TestPing(t *testing.T) {
 }
 
 func TestUse(t *testing.T) {
-	srv := maddog.NewServer(":8080", "")
+	srv := maddog.NewServer(":8080", "/")
 
 	srv.Use(func(h maddog.Handler) maddog.Handler {
     return maddog.HandlerFunc(func(ctx *maddog.Context) {
@@ -44,6 +44,27 @@ func TestUse(t *testing.T) {
 	})
 
 	req := httptest.NewRequest(http.MethodGet, "/ping", nil)
+	w := httptest.NewRecorder()
+
+	srv.Router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, go %d", w.Code)
+	}
+}
+
+func TestSubRouter(t *testing.T) {
+	srv := maddog.NewServer(":8080", "/")
+
+  userRouter := srv.NewSubRouterMount("/users")
+  
+  userRouter.Get("/create", func(ctx *maddog.Context) {
+    res := maddog.ResMap{"msg": "User created successfully"}
+    t.Log(res)
+    ctx.WriteJSON(200, res)
+  })
+
+	req := httptest.NewRequest(http.MethodGet, "/users/create", nil)
 	w := httptest.NewRecorder()
 
 	srv.Router.ServeHTTP(w, req)
